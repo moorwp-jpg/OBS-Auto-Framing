@@ -1,0 +1,17 @@
+build*/
+.cache/
+.vs/
+out/
+third_party/onnxruntime/
+third_party/obs/
+data/models/*.onnx
+*.user
+*.suo
+*.VC.db
+*.dll
+*.pdb
+*.exp
+*.lib
+*.ilk
+*.obj
+*.exe

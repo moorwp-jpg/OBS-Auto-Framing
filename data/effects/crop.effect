@@ -1,0 +1,38 @@
+uniform float4x4 ViewProj;
+uniform texture2d image;
+uniform float2 crop_min;
+uniform float2 crop_size;
+
+sampler_state textureSampler {
+    Filter = Linear;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+struct VertData {
+    float4 pos : POSITION;
+    float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData vert_in)
+{
+    VertData vert_out;
+    vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
+    vert_out.uv = crop_min + vert_in.uv * crop_size;
+    return vert_out;
+}
+
+float4 PSDraw(VertData vert_in) : TARGET
+{
+    return image.Sample(textureSampler, vert_in.uv);
+}
+
+technique Draw
+{
+    pass
+    {
+        vertex_shader = VSDefault(vert_in);
+        pixel_shader = PSDraw(vert_in);
+    }
+}
+
