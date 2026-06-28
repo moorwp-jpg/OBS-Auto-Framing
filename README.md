@@ -71,14 +71,13 @@ Return to this plugin directory and run:
 .\scripts\download_onnxruntime.ps1
 .\scripts\download_yolox_model.ps1
 .\scripts\import_obs_dev_files.ps1 -ObsRoot C:\src\obs-studio -ObsBuildRoot C:\src\obs-studio\build_x64
-cmake --preset windows-x64
-cmake --build --preset windows-x64 --config RelWithDebInfo
+.\scripts\build.ps1 -BuildConfig RelWithDebInfo
 ```
 
-If you prefer to stay in the current PowerShell window, run this instead:
+`scripts\build.ps1` runs CMake inside a clean child PowerShell with one canonical `Path` variable. This avoids the duplicate `PATH`/`Path` environment that some terminal hosts inherit and that MSBuild rejects. To build, test, and package in one clean environment, run:
 
 ```powershell
-$env:Path = "C:\Program Files\CMake\bin;$env:Path"
+.\scripts\build.ps1 -BuildConfig RelWithDebInfo -RunTests -Package
 ```
 
 `download_yolox_model.ps1` defaults to YOLOX-Tiny. Use `-Model nano`, `-Model tiny`, `-Model s`, or `-Model all` to populate `data\models` with additional choices. YOLOX-Tiny is the recommended bundled release model.

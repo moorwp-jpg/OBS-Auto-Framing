@@ -153,9 +153,10 @@ namespace ObsAutoFraming
 
 $shell = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
 $startupCommand = @"
+`$ProgressPreference = 'SilentlyContinue'
 Set-Location -LiteralPath '$($projectRoot.Replace("'", "''"))'
-Write-Host 'Project environment active.'
-Write-Host 'CMake: $cmakeExe'
+[Console]::WriteLine('Project environment active.')
+[Console]::WriteLine('CMake: $cmakeExe')
 cmake --version
 "@
 if (-not [string]::IsNullOrWhiteSpace($Command)) {
