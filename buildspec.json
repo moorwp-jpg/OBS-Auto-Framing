@@ -20,6 +20,7 @@
   "name": "obs-auto-framing",
   "displayName": "OBS Auto Framing",
   "version": "0.1.0",
+  "releaseChannel": "Preview",
   "author": "OBS Auto Framing contributors",
   "website": "https://example.com/obs-auto-framing",
   "email": "maintainers@example.com"

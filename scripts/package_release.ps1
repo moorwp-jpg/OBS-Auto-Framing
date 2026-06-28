@@ -146,15 +146,60 @@ function Validate-StagedFiles {
         }
     }
 
+    $expectedNormalized = @($ExpectedRelativePaths | ForEach-Object { $_.Replace('\', '/') })
+    $stagedFiles = @(Get-ChildItem -LiteralPath $Root -Recurse -File)
+    $unexpectedFiles = @($stagedFiles | Where-Object {
+        $relative = (Format-RelativePathForDisplay -Root $Root -Path $_.FullName).Replace('\', '/')
+        $expectedNormalized -notcontains $relative
+    })
+
+    if ($unexpectedFiles.Count -gt 0) {
+        $relativeUnexpectedFiles = $unexpectedFiles | ForEach-Object {
+            Format-RelativePathForDisplay -Root $Root -Path $_.FullName
+        }
+        throw "Package validation failed; unexpected files entered the release staging area: $($relativeUnexpectedFiles -join ', ')"
+    }
+
     $blockedExtensions = @(".exe", ".pdb", ".ilk", ".exp", ".lib", ".obj", ".iobj", ".ipdb")
-    $blockedFiles = Get-ChildItem -LiteralPath $Root -Recurse -File |
-        Where-Object { $blockedExtensions -contains $_.Extension.ToLowerInvariant() }
+    $blockedFiles = @($stagedFiles |
+        Where-Object { $blockedExtensions -contains $_.Extension.ToLowerInvariant() })
 
     if ($blockedFiles.Count -gt 0) {
         $relativeBlockedFiles = $blockedFiles | ForEach-Object {
             Format-RelativePathForDisplay -Root $Root -Path $_.FullName
         }
         throw "Package validation failed; build artifacts entered the release staging area: $($relativeBlockedFiles -join ', ')"
+    }
+
+    $blockedPathPrefixes = @(
+        ".cache/",
+        ".git/",
+        ".vs/",
+        "_staging/",
+        "build/",
+        "build_",
+        "build-x",
+        "data/models/",
+        "out/",
+        "third_party/"
+    )
+    $blockedPathFiles = @($stagedFiles | Where-Object {
+        $relative = (Format-RelativePathForDisplay -Root $Root -Path $_.FullName).Replace('\', '/')
+        $isBlocked = $false
+        foreach ($prefix in $blockedPathPrefixes) {
+            if ($relative.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $isBlocked = $true
+                break
+            }
+        }
+        $isBlocked
+    })
+
+    if ($blockedPathFiles.Count -gt 0) {
+        $relativeBlockedPathFiles = $blockedPathFiles | ForEach-Object {
+            Format-RelativePathForDisplay -Root $Root -Path $_.FullName
+        }
+        throw "Package validation failed; blocked directories entered the release staging area: $($relativeBlockedPathFiles -join ', ')"
     }
 }
 
@@ -179,14 +224,49 @@ function Validate-ZipEntries {
             }
         }
 
+        $expectedEntries = @($ExpectedRelativePaths | ForEach-Object { $_.Replace('\', '/') })
+        $fileEntries = @($archive.Entries | Where-Object { -not [string]::IsNullOrEmpty($_.Name) })
+        $unexpectedEntries = @($fileEntries | Where-Object { $expectedEntries -notcontains $_.FullName.Replace('\', '/') })
+        if ($unexpectedEntries.Count -gt 0) {
+            throw "Package validation failed; zip contains unexpected files: $($unexpectedEntries.FullName -join ', ')"
+        }
+
         $blockedExtensions = @(".exe", ".pdb", ".ilk", ".exp", ".lib", ".obj", ".iobj", ".ipdb")
-        $blockedEntries = @($archive.Entries | Where-Object {
+        $blockedEntries = @($fileEntries | Where-Object {
             $extension = [System.IO.Path]::GetExtension($_.FullName).ToLowerInvariant()
             $blockedExtensions -contains $extension
         })
 
         if ($blockedEntries.Count -gt 0) {
             throw "Package validation failed; build artifacts entered the release zip: $($blockedEntries.FullName -join ', ')"
+        }
+
+        $blockedPathPrefixes = @(
+            ".cache/",
+            ".git/",
+            ".vs/",
+            "_staging/",
+            "build/",
+            "build_",
+            "build-x",
+            "data/models/",
+            "out/",
+            "third_party/"
+        )
+        $blockedPathEntries = @($fileEntries | Where-Object {
+            $entryName = $_.FullName.Replace('\', '/')
+            $isBlocked = $false
+            foreach ($prefix in $blockedPathPrefixes) {
+                if ($entryName.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    $isBlocked = $true
+                    break
+                }
+            }
+            $isBlocked
+        })
+
+        if ($blockedPathEntries.Count -gt 0) {
+            throw "Package validation failed; blocked directories entered the release zip: $($blockedPathEntries.FullName -join ', ')"
         }
     }
     finally {
@@ -237,6 +317,8 @@ $cropEffect = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "data\effects\c
 $localeFile = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "data\locale\en-US.ini") -Description "English locale"
 $readmeFile = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "README.md") -Description "README"
 $installGuide = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "docs\install.md") -Description "Install guide"
+$troubleshootingGuide = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "docs\troubleshooting.md") -Description "Troubleshooting guide"
+$thirdPartyNotices = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "THIRD_PARTY_NOTICES.md") -Description "Third-party notices"
 
 $modelNames = @("yolox_tiny.onnx")
 if ($IncludeNano) {
@@ -277,7 +359,9 @@ $expectedLayout = @(
     "data\obs-plugins\$pluginName\locale\en-US.ini",
     "data\obs-plugins\$pluginName\models\yolox_tiny.onnx",
     "README.md",
-    "docs\install.md"
+    "docs\install.md",
+    "docs\troubleshooting.md",
+    "THIRD_PARTY_NOTICES.md"
 )
 
 Copy-ReleaseFile -Source $pluginDll -RelativeDestination "obs-plugins\64bit\$pluginName.dll"
@@ -286,6 +370,8 @@ Copy-ReleaseFile -Source $cropEffect -RelativeDestination "data\obs-plugins\$plu
 Copy-ReleaseFile -Source $localeFile -RelativeDestination "data\obs-plugins\$pluginName\locale\en-US.ini"
 Copy-ReleaseFile -Source $readmeFile -RelativeDestination "README.md"
 Copy-ReleaseFile -Source $installGuide -RelativeDestination "docs\install.md"
+Copy-ReleaseFile -Source $troubleshootingGuide -RelativeDestination "docs\troubleshooting.md"
+Copy-ReleaseFile -Source $thirdPartyNotices -RelativeDestination "THIRD_PARTY_NOTICES.md"
 
 foreach ($modelName in $modelNames) {
     $relativeModelPath = "data\obs-plugins\$pluginName\models\$modelName"

@@ -23,6 +23,10 @@
 #include <utility>
 #include <vector>
 
+#ifndef PLUGIN_RELEASE_CHANNEL
+#define PLUGIN_RELEASE_CHANNEL ""
+#endif
+
 namespace autoframing {
 namespace {
 
@@ -409,7 +413,18 @@ std::string format_rect(const Rect& rect) {
     return buffer;
 }
 
+std::string plugin_version_display() {
+    std::string version = PLUGIN_VERSION;
+    const char* release_channel = PLUGIN_RELEASE_CHANNEL;
+    if (release_channel != nullptr && release_channel[0] != '\0') {
+        version += " ";
+        version += release_channel;
+    }
+    return version;
+}
+
 struct RuntimeStatusText {
+    std::string plugin_version;
     std::string status;
     std::string backend;
     std::string model_quality;
@@ -453,6 +468,7 @@ std::string format_performance_guidance(const RuntimeInfo& runtime) {
 
 RuntimeStatusText format_runtime_status_text(const RuntimeInfo& runtime) {
     RuntimeStatusText text;
+    text.plugin_version = std::string("Plugin version: ") + plugin_version_display();
     text.status = std::string("Status: ") + runtime_status_to_string(runtime.status) + " - " + runtime.status_detail;
     text.backend = std::string("Detector backend: ") + detector_backend_display(runtime.detector_backend);
     text.model_quality =
@@ -514,6 +530,7 @@ void apply_runtime_status_text(obs_properties_t* props, const RuntimeInfo& runti
     };
 
     set_description("runtime_backend", runtime_text.backend);
+    set_description("runtime_plugin_version", runtime_text.plugin_version);
     set_description("runtime_model_quality", runtime_text.model_quality);
     set_description("runtime_model_loaded", runtime_text.model_loaded);
     set_description("runtime_model_path", runtime_text.model_path);
@@ -1378,6 +1395,7 @@ obs_properties_t* auto_framing_properties(void* data) {
     obs_properties_add_button2(props, "runtime_refresh", text("RefreshRuntimeStatus"), refresh_runtime_status_clicked,
                                data);
 
+    obs_properties_add_text(props, "runtime_plugin_version", runtime_text.plugin_version.c_str(), OBS_TEXT_INFO);
     obs_properties_add_text(props, "runtime_backend", runtime_text.backend.c_str(), OBS_TEXT_INFO);
     obs_properties_add_text(props, "runtime_model_quality", runtime_text.model_quality.c_str(), OBS_TEXT_INFO);
     obs_properties_add_text(props, "runtime_model_loaded", runtime_text.model_loaded.c_str(), OBS_TEXT_INFO);

@@ -6,5 +6,6 @@ endif()
 file(READ "${_buildspec_path}" _buildspec_json)
 string(JSON _name GET "${_buildspec_json}" name)
 string(JSON _version GET "${_buildspec_json}" version)
+string(JSON _release_channel GET "${_buildspec_json}" releaseChannel)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/.." "${CMAKE_CURRENT_LIST_DIR}")

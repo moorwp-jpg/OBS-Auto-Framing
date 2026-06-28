@@ -20,6 +20,8 @@ data\obs-plugins\obs-auto-framing\locale\en-US.ini
 data\obs-plugins\obs-auto-framing\models\yolox_tiny.onnx
 ```
 
+It also includes `README.md`, `docs\install.md`, `docs\troubleshooting.md`, and `THIRD_PARTY_NOTICES.md`.
+
 ## OBS Source Or Build Runtime
 
 For an OBS build tree, use the runtime root that contains `bin\64bit\obs64.exe`. With a standard Windows OBS build this is commonly:
@@ -83,6 +85,7 @@ If the plugin does not appear:
 - Check `Help > Log Files > View Current Log` for messages containing `obs-auto-framing` or module load errors.
 - If Windows blocked a downloaded zip, right-click the zip or DLL, open Properties, choose Unblock, then extract again.
 - Install the current Microsoft Visual C++ Redistributable if the OBS log reports a missing C++ runtime DLL.
+- See `docs\troubleshooting.md` for OBS log locations and common runtime failures.
 
 If the filter appears but detection does not run:
 

@@ -10,7 +10,7 @@ Confirm the plugin DLL was installed to:
 
 Confirm you launched OBS from the same runtime root you installed into. If using an OBS source build, start the OBS executable under the matching `rundir\<Config>` folder.
 
-Open the OBS log and search for `obs-auto-framing`. You should see plugin load and filter registration messages.
+Open the OBS log and search for `obs-auto-framing`. You should see plugin load and filter registration messages, including `version 0.1.0 Preview`.
 
 ## Missing onnxruntime.dll
 
@@ -20,13 +20,15 @@ OBS must find `onnxruntime.dll` beside the plugin DLL:
 <ObsRuntimeRoot>\obs-plugins\64bit\onnxruntime.dll
 ```
 
-Run:
+For a release install, close OBS and extract the release zip into the OBS root again. The zip includes `onnxruntime.dll`.
+
+For a local development install, run:
 
 ```powershell
 .\scripts\install_to_obs.ps1 -PluginBuildDir .\build_x64\bin\RelWithDebInfo -ObsRuntimeRoot <ObsRuntimeRoot>
 ```
 
-If OBS still reports a missing DLL, make sure you installed the same build configuration you are launching.
+If OBS still reports a missing DLL, make sure you installed into the same OBS root you are launching.
 
 ## Missing Model File
 
@@ -43,7 +45,7 @@ The bundled model filenames are:
 
 Custom ONNX uses only the Custom Model Path selected in the filter settings.
 
-If no model exists, OBS should not crash. The filter status will show `Model missing`, and the log will include the failed model path resolution.
+If no model exists, OBS should not crash. The filter status will show `Model missing`, and the log will include the failed model path resolution. A normal v0.1.0 Preview release zip should include `yolox_tiny.onnx`.
 
 ## crop.effect Not Loading
 
@@ -62,7 +64,7 @@ Check these items:
 - Detector Backend is set to `ONNX Runtime CPU`.
 - Debug Overlay is enabled.
 - The status field says `Running`.
-- The log shows ONNX Runtime initialization succeeded.
+- The log shows ONNX Runtime initialization succeeded and the resolved `yolox_tiny.onnx` path.
 - Detection Model points to an installed model. `Balanced - YOLOX-Tiny` is the default and recommended release model.
 - In Simple IoU mode, the Simple IoU Detection Confidence threshold is not too high. Try `0.25` to `0.35`.
 - In ByteTrack mode, Detector Score Floor (Advanced ByteTrack) controls how low the ONNX detector output can go before the tracker sees it. Try `0.05` to `0.10` if weak boxes are missing.
@@ -160,7 +162,7 @@ obs-auto-framing
 
 Useful log lines include:
 
-- Plugin load and filter registration.
+- Plugin load with version `0.1.0 Preview` and filter registration.
 - Detector backend selection.
 - Resolved model path.
 - ONNX Runtime initialization success or failure.

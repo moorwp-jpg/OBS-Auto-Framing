@@ -1,0 +1,15 @@
+build*/ export-ignore
+out/ export-ignore
+.cache/ export-ignore
+.vs/ export-ignore
+third_party/ export-ignore
+data/models/*.onnx export-ignore
+*.zip export-ignore
+*.sha256 export-ignore
+*.dll export-ignore
+*.pdb export-ignore
+*.exe export-ignore
+*.lib export-ignore
+*.exp export-ignore
+*.ilk export-ignore
+*.obj export-ignore

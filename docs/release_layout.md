@@ -10,6 +10,7 @@ Use this layout for a Windows OBS runtime package. `<ObsRuntimeRoot>` is the OBS
 <ObsRuntimeRoot>\data\obs-plugins\obs-auto-framing\effects\crop.effect
 <ObsRuntimeRoot>\data\obs-plugins\obs-auto-framing\locale\en-US.ini
 <ObsRuntimeRoot>\data\obs-plugins\obs-auto-framing\models\yolox_tiny.onnx
+<ObsRuntimeRoot>\THIRD_PARTY_NOTICES.md
 ```
 
 `yolox_tiny.onnx` is the recommended bundled model. The default preset uses ONNX Runtime CPU, YOLOX-Tiny, and ByteTrack.
@@ -60,4 +61,4 @@ out\release\obs-auto-framing-v0.1.0-windows-x64.zip
 out\release\obs-auto-framing-v0.1.0-windows-x64.zip.sha256
 ```
 
-By default it bundles only `yolox_tiny.onnx`. Use `-IncludeNano` to add `yolox_nano.onnx`, or `-IncludeSmall` to add `yolox_s.onnx`. It validates required runtime files, rejects accidental build artifacts such as `.pdb`, `.exe`, `.lib`, and `.obj`, and verifies the zip contains the expected OBS layout before reporting success.
+By default it bundles only `yolox_tiny.onnx`. Use `-IncludeNano` to add `yolox_nano.onnx`, or `-IncludeSmall` to add `yolox_s.onnx`. It validates required runtime files, rejects unexpected files, blocked directories, and accidental build artifacts such as `.pdb`, `.exe`, `.lib`, and `.obj`, and verifies the zip contains the expected OBS layout before reporting success.

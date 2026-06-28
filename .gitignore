@@ -16,3 +16,5 @@ data/models/*.onnx
 *.ilk
 *.obj
 *.exe
+*.zip
+*.sha256

@@ -119,6 +119,7 @@ if(BUILD_PLUGIN)
         PRIVATE
             PLUGIN_NAME="${_name}"
             PLUGIN_VERSION="${PROJECT_VERSION}"
+            PLUGIN_RELEASE_CHANNEL="${_release_channel}"
             HAVE_ONNXRUNTIME=1
             DEFAULT_YOLOX_MODEL_DIR="${DEFAULT_YOLOX_MODEL_DIR}")
 
