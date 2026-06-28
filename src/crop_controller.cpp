@@ -16,7 +16,7 @@ PresetMargins margins_for_preset(FramingPreset preset)
 {
     switch (preset) {
     case FramingPreset::Tight:
-        return {1.35f, 1.45f, -0.03f};
+        return {1.25f, 1.25f, -0.03f};
     case FramingPreset::Headroom:
         return {1.70f, 1.95f, -0.18f};
     case FramingPreset::FullBody:
@@ -35,6 +35,48 @@ Rect lerp_rect(const Rect& from, const Rect& to, float amount)
         from.width + (to.width - from.width) * amount,
         from.height + (to.height - from.height) * amount,
     };
+}
+
+float smoothstep(float amount)
+{
+    const float t = std::clamp(amount, 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+float soft_dead_zone_center(float current_center, float target_center, float outer_radius)
+{
+    if (outer_radius <= 0.0f) {
+        return target_center;
+    }
+
+    constexpr float inner_radius_ratio = 0.45f;
+    const float delta = target_center - current_center;
+    const float distance = std::fabs(delta);
+    const float inner_radius = outer_radius * inner_radius_ratio;
+
+    if (distance <= inner_radius) {
+        return current_center;
+    }
+
+    if (distance >= outer_radius) {
+        return target_center;
+    }
+
+    const float influence = smoothstep((distance - inner_radius) / (outer_radius - inner_radius));
+    return current_center + delta * influence;
+}
+
+Rect focus_region_for_preset(const Rect& subject, FramingPreset preset)
+{
+    if (preset != FramingPreset::Tight || !subject.valid()) {
+        return subject;
+    }
+
+    return make_centered_rect(
+        subject.center_x(),
+        subject.y + subject.height * 0.28f,
+        subject.width * 1.15f,
+        subject.height * 0.50f);
 }
 
 } // namespace
@@ -109,11 +151,12 @@ Rect CropController::build_target_crop(
     const AutoFramingSettings& settings) const
 {
     const PresetMargins margins = margins_for_preset(settings.framing_preset);
+    const Rect focus_region = focus_region_for_preset(subject, settings.framing_preset);
     Rect target = make_centered_rect(
-        subject.center_x(),
-        subject.center_y() + subject.height * margins.center_y_offset_boxes,
-        subject.width * margins.width_multiplier,
-        subject.height * margins.height_multiplier);
+        focus_region.center_x(),
+        focus_region.center_y() + focus_region.height * margins.center_y_offset_boxes,
+        focus_region.width * margins.width_multiplier,
+        focus_region.height * margins.height_multiplier);
 
     target = preserve_aspect(target, source_size.aspect());
     return enforce_zoom_and_bounds(target, source_size, settings.max_zoom);
@@ -187,15 +230,12 @@ Rect CropController::apply_dead_zone(Rect target, double dead_zone) const
         return target;
     }
 
-    const float allowed_x = current_crop_.width * static_cast<float>(dead_zone) * 0.5f;
-    const float allowed_y = current_crop_.height * static_cast<float>(dead_zone) * 0.5f;
-    const bool inside_x = std::fabs(target.center_x() - current_crop_.center_x()) <= allowed_x;
-    const bool inside_y = std::fabs(target.center_y() - current_crop_.center_y()) <= allowed_y;
-
-    if (inside_x && inside_y) {
-        target.x = current_crop_.center_x() - target.width * 0.5f;
-        target.y = current_crop_.center_y() - target.height * 0.5f;
-    }
+    const float outer_radius_x = current_crop_.width * static_cast<float>(dead_zone) * 0.5f;
+    const float outer_radius_y = current_crop_.height * static_cast<float>(dead_zone) * 0.5f;
+    const float softened_center_x = soft_dead_zone_center(current_crop_.center_x(), target.center_x(), outer_radius_x);
+    const float softened_center_y = soft_dead_zone_center(current_crop_.center_y(), target.center_y(), outer_radius_y);
+    target.x = softened_center_x - target.width * 0.5f;
+    target.y = softened_center_y - target.height * 0.5f;
 
     return target;
 }

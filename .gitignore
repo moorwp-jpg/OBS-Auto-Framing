@@ -4,6 +4,7 @@ build*/
 out/
 third_party/onnxruntime/
 third_party/obs/
+third_party/_downloads/
 data/models/*.onnx
 *.user
 *.suo

@@ -19,14 +19,18 @@ $requiredFiles = @(
     (Join-Path $ObsRuntimeRoot "obs-plugins\64bit\obs-auto-framing.dll"),
     (Join-Path $ObsRuntimeRoot "obs-plugins\64bit\onnxruntime.dll"),
     (Join-Path $ObsRuntimeRoot "data\obs-plugins\obs-auto-framing\effects\crop.effect"),
-    (Join-Path $ObsRuntimeRoot "data\obs-plugins\obs-auto-framing\locale\en-US.ini"),
-    (Join-Path $ObsRuntimeRoot "data\obs-plugins\obs-auto-framing\models\yolox_nano.onnx")
+    (Join-Path $ObsRuntimeRoot "data\obs-plugins\obs-auto-framing\locale\en-US.ini")
 )
+$modelsDir = Join-Path $ObsRuntimeRoot "data\obs-plugins\obs-auto-framing\models"
 
 foreach ($file in $requiredFiles) {
     if (-not (Test-Path -LiteralPath $file)) {
         throw "Required obs-auto-framing runtime file is missing: $file"
     }
+}
+
+if (-not (Test-Path -LiteralPath $modelsDir) -or @(Get-ChildItem -LiteralPath $modelsDir -Filter "*.onnx" -File).Count -eq 0) {
+    throw "No obs-auto-framing ONNX model files found in: $modelsDir"
 }
 
 $workingDirectory = Split-Path -Parent $obsExe

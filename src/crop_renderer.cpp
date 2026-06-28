@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <string>
 
 #include <graphics/vec4.h>
 #include <util/platform.h>
@@ -135,18 +136,257 @@ float draw_number(int value, float x, float y, float scale, gs_effect_t* solid, 
     return cursor;
 }
 
+float draw_glyph_char(char ch, float x, float y, float scale, gs_effect_t* solid, Color color)
+{
+    const char* rows[5] = {"000", "000", "000", "000", "000"};
+
+    switch (ch) {
+    case '0':
+    case 'O':
+        rows[0] = "111";
+        rows[1] = "101";
+        rows[2] = "101";
+        rows[3] = "101";
+        rows[4] = "111";
+        break;
+    case '1':
+        rows[0] = "010";
+        rows[1] = "110";
+        rows[2] = "010";
+        rows[3] = "010";
+        rows[4] = "111";
+        break;
+    case '2':
+        rows[0] = "111";
+        rows[1] = "001";
+        rows[2] = "111";
+        rows[3] = "100";
+        rows[4] = "111";
+        break;
+    case '3':
+        rows[0] = "111";
+        rows[1] = "001";
+        rows[2] = "111";
+        rows[3] = "001";
+        rows[4] = "111";
+        break;
+    case '4':
+        rows[0] = "101";
+        rows[1] = "101";
+        rows[2] = "111";
+        rows[3] = "001";
+        rows[4] = "001";
+        break;
+    case '5':
+    case 'S':
+        rows[0] = "111";
+        rows[1] = "100";
+        rows[2] = "111";
+        rows[3] = "001";
+        rows[4] = "111";
+        break;
+    case '6':
+        rows[0] = "111";
+        rows[1] = "100";
+        rows[2] = "111";
+        rows[3] = "101";
+        rows[4] = "111";
+        break;
+    case '7':
+        rows[0] = "111";
+        rows[1] = "001";
+        rows[2] = "010";
+        rows[3] = "010";
+        rows[4] = "010";
+        break;
+    case '8':
+    case 'B':
+        rows[0] = "111";
+        rows[1] = "101";
+        rows[2] = "111";
+        rows[3] = "101";
+        rows[4] = "111";
+        break;
+    case '9':
+        rows[0] = "111";
+        rows[1] = "101";
+        rows[2] = "111";
+        rows[3] = "001";
+        rows[4] = "111";
+        break;
+    case 'A':
+        rows[0] = "111";
+        rows[1] = "101";
+        rows[2] = "111";
+        rows[3] = "101";
+        rows[4] = "101";
+        break;
+    case 'C':
+        rows[0] = "111";
+        rows[1] = "100";
+        rows[2] = "100";
+        rows[3] = "100";
+        rows[4] = "111";
+        break;
+    case 'D':
+        rows[0] = "110";
+        rows[1] = "101";
+        rows[2] = "101";
+        rows[3] = "101";
+        rows[4] = "110";
+        break;
+    case 'E':
+        rows[0] = "111";
+        rows[1] = "100";
+        rows[2] = "111";
+        rows[3] = "100";
+        rows[4] = "111";
+        break;
+    case 'I':
+        rows[0] = "111";
+        rows[1] = "010";
+        rows[2] = "010";
+        rows[3] = "010";
+        rows[4] = "111";
+        break;
+    case 'K':
+        rows[0] = "101";
+        rows[1] = "101";
+        rows[2] = "110";
+        rows[3] = "101";
+        rows[4] = "101";
+        break;
+    case 'L':
+        rows[0] = "100";
+        rows[1] = "100";
+        rows[2] = "100";
+        rows[3] = "100";
+        rows[4] = "111";
+        break;
+    case 'N':
+        rows[0] = "101";
+        rows[1] = "111";
+        rows[2] = "111";
+        rows[3] = "111";
+        rows[4] = "101";
+        break;
+    case 'R':
+        rows[0] = "110";
+        rows[1] = "101";
+        rows[2] = "110";
+        rows[3] = "101";
+        rows[4] = "101";
+        break;
+    case 'T':
+        rows[0] = "111";
+        rows[1] = "010";
+        rows[2] = "010";
+        rows[3] = "010";
+        rows[4] = "010";
+        break;
+    case 'U':
+        rows[0] = "101";
+        rows[1] = "101";
+        rows[2] = "101";
+        rows[3] = "101";
+        rows[4] = "111";
+        break;
+    case 'W':
+        rows[0] = "101";
+        rows[1] = "101";
+        rows[2] = "111";
+        rows[3] = "111";
+        rows[4] = "101";
+        break;
+    default:
+        break;
+    }
+
+    for (int row = 0; row < 5; ++row) {
+        for (int column = 0; column < 3; ++column) {
+            if (rows[row][column] == '1') {
+                draw_filled_rect(
+                    x + static_cast<float>(column) * scale,
+                    y + static_cast<float>(row) * scale,
+                    scale,
+                    scale,
+                    solid,
+                    color);
+            }
+        }
+    }
+
+    return x + 4.0f * scale;
+}
+
+float draw_text(const std::string& text, float x, float y, float scale, gs_effect_t* solid, Color color)
+{
+    float cursor = x;
+    for (char ch : text) {
+        if (ch == ' ') {
+            cursor += 4.0f * scale;
+            continue;
+        }
+        cursor = draw_glyph_char(ch, cursor, y, scale, solid, color);
+    }
+    return cursor;
+}
+
+Color color_for_state(TrackState state)
+{
+    switch (state) {
+    case TrackState::New:
+        return {0.15f, 0.72f, 1.0f, 0.95f};
+    case TrackState::Lost:
+        return {1.0f, 0.55f, 0.15f, 0.90f};
+    case TrackState::Removed:
+        return {1.0f, 0.25f, 0.25f, 0.90f};
+    case TrackState::Tracked:
+    default:
+        return {0.45f, 1.0f, 0.35f, 0.95f};
+    }
+}
+
 void draw_track_label(const PersonTrack& track, const Rect& output_box, gs_effect_t* solid)
 {
     const float scale = 2.0f;
     const float label_x = std::max(2.0f, output_box.x);
-    const float id_y = std::max(2.0f, output_box.y - 30.0f);
-    const float score_y = id_y + 15.0f;
+    const float id_y = output_box.y > 46.0f ? output_box.y - 46.0f : output_box.y + 4.0f;
+    const float state_y = id_y + 13.0f;
+    const float score_y = id_y + 26.0f;
 
     const Color id_color{0.45f, 1.0f, 0.35f, 0.95f};
+    const Color state_color = color_for_state(track.state);
     const Color confidence_color{1.0f, 0.88f, 0.25f, 0.95f};
 
     draw_number(track.id, label_x, id_y, scale, solid, id_color);
+    draw_text(track_state_short_name(track.state), label_x, state_y, scale, solid, state_color);
     draw_number(static_cast<int>(std::round(track.confidence * 100.0f)), label_x, score_y, scale, solid, confidence_color);
+}
+
+std::string tracker_summary(const DebugOverlayData& data)
+{
+    const std::string prefix = data.tracking_algorithm == TrackingAlgorithm::SimpleIou ? "IOU" : "BT";
+    std::string summary = prefix + " A" + std::to_string(data.active_track_count) + " L" + std::to_string(data.lost_track_count);
+
+    if (data.subject_lock_mode == SubjectLockMode::Off) {
+        return summary;
+    }
+
+    if (data.locked_track_ids.empty()) {
+        return summary + " WAIT";
+    }
+
+    summary += data.subject_lock_lost ? " LOST" : " LOCK";
+    for (size_t i = 0; i < data.locked_track_ids.size() && i < 3; ++i) {
+        summary += " ";
+        summary += std::to_string(data.locked_track_ids[i]);
+    }
+    if (data.ignored_detection_count > 0) {
+        summary += " I";
+        summary += std::to_string(data.ignored_detection_count);
+    }
+    return summary;
 }
 
 } // namespace
@@ -290,12 +530,22 @@ void CropRenderer::render_debug_overlay(const Rect& crop, uint32_t source_width,
 
     const Color detection_color{0.15f, 0.72f, 1.0f, 0.90f};
     const Color track_color{0.45f, 1.0f, 0.35f, 0.95f};
+    const Color lost_track_color{1.0f, 0.55f, 0.15f, 0.80f};
     const Color current_crop_color{1.0f, 1.0f, 1.0f, 0.80f};
     const Color target_crop_color{1.0f, 0.25f, 0.85f, 0.85f};
     const Color dead_zone_color{1.0f, 0.88f, 0.25f, 0.70f};
+    const Color summary_color{1.0f, 1.0f, 1.0f, 0.95f};
+
+    draw_text(tracker_summary(data), 8.0f, 8.0f, 3.0f, solid, summary_color);
 
     for (const Detection& detection : data.detections) {
         draw_rect_outline(source_to_output_rect(detection.box, crop, source_width, source_height), 2.0f, solid, detection_color);
+    }
+
+    for (const PersonTrack& track : data.lost_tracks) {
+        const Rect output_box = source_to_output_rect(track.box, crop, source_width, source_height);
+        draw_rect_outline(output_box, 2.0f, solid, lost_track_color);
+        draw_track_label(track, output_box, solid);
     }
 
     for (const PersonTrack& track : data.tracks) {

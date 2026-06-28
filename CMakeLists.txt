@@ -11,9 +11,9 @@ option(ENABLE_TESTS "Build unit tests" ON)
 set(ONNXRUNTIME_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/third_party/onnxruntime"
     CACHE PATH "Path to the extracted ONNX Runtime win-x64 package")
-set(YOLOX_NANO_MODEL
-    "${CMAKE_CURRENT_SOURCE_DIR}/data/models/yolox_nano.onnx"
-    CACHE FILEPATH "Path to the YOLOX-Nano ONNX model")
+set(DEFAULT_YOLOX_MODEL_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/data/models"
+    CACHE PATH "Directory containing bundled YOLOX ONNX models")
 set(OBS_DEV_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/third_party/obs"
     CACHE PATH "Project-local OBS development files with include/ and lib/ folders")
@@ -25,7 +25,13 @@ include(helpers)
 add_library(obs-auto-framing-core STATIC)
 target_sources(
     obs-auto-framing-core
-    PRIVATE src/crop_controller.cpp src/iou_tracker.cpp src/mock_detector.cpp
+    PRIVATE
+        src/crop_controller.cpp
+        src/iou_tracker.cpp
+        src/mock_detector.cpp
+        src/tracker/assignment.cpp
+        src/tracker/bytetrack_tracker.cpp
+        src/yolox_postprocess.cpp
     PUBLIC
         FILE_SET HEADERS
         BASE_DIRS src
@@ -35,7 +41,10 @@ target_sources(
             src/geometry.hpp
             src/letterbox.hpp
             src/settings.hpp
+            src/tracker/assignment.hpp
+            src/tracker/bytetrack_tracker.hpp
             src/tracker.hpp
+            src/yolox_postprocess.hpp
             src/yuv.hpp)
 target_compile_features(obs-auto-framing-core PUBLIC cxx_std_17)
 
@@ -55,11 +64,12 @@ if(BUILD_PLUGIN)
                 "or set ONNXRUNTIME_ROOT to an extracted onnxruntime-win-x64 package containing include/, lib/onnxruntime.lib, and lib/onnxruntime.dll.")
     endif()
 
-    if(NOT EXISTS "${YOLOX_NANO_MODEL}")
+    set(DEFAULT_YOLOX_TINY_MODEL "${DEFAULT_YOLOX_MODEL_DIR}/yolox_tiny.onnx")
+    if(NOT EXISTS "${DEFAULT_YOLOX_TINY_MODEL}")
         message(
             FATAL_ERROR
-                "YOLOX-Nano model is missing. Run scripts/download_yolox_model.ps1, "
-                "or set YOLOX_NANO_MODEL to an existing yolox_nano.onnx file.")
+                "YOLOX-Tiny model is missing. Run scripts/download_yolox_model.ps1 -Model tiny, "
+                "or set DEFAULT_YOLOX_MODEL_DIR to a directory containing yolox_tiny.onnx.")
     endif()
 
     set(OBS_DEV_INCLUDE_ROOT "${OBS_DEV_ROOT}/include")
@@ -110,7 +120,7 @@ if(BUILD_PLUGIN)
             PLUGIN_NAME="${_name}"
             PLUGIN_VERSION="${PROJECT_VERSION}"
             HAVE_ONNXRUNTIME=1
-            DEFAULT_YOLOX_NANO_MODEL="${YOLOX_NANO_MODEL}")
+            DEFAULT_YOLOX_MODEL_DIR="${DEFAULT_YOLOX_MODEL_DIR}")
 
     if(ENABLE_FRONTEND_API)
         find_package(obs-frontend-api REQUIRED)
@@ -149,4 +159,12 @@ if(ENABLE_TESTS)
     add_executable(crop_controller_tests tests/crop_controller_tests.cpp)
     target_link_libraries(crop_controller_tests PRIVATE obs-auto-framing-core)
     add_test(NAME crop_controller_tests COMMAND crop_controller_tests)
+
+    add_executable(bytetrack_tracker_tests tests/bytetrack_tracker_tests.cpp)
+    target_link_libraries(bytetrack_tracker_tests PRIVATE obs-auto-framing-core)
+    add_test(NAME bytetrack_tracker_tests COMMAND bytetrack_tracker_tests)
+
+    add_executable(yolox_postprocess_tests tests/yolox_postprocess_tests.cpp)
+    target_link_libraries(yolox_postprocess_tests PRIVATE obs-auto-framing-core)
+    add_test(NAME yolox_postprocess_tests COMMAND yolox_postprocess_tests)
 endif()

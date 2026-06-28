@@ -9,8 +9,11 @@ namespace autoframing {
 
 struct OnnxPersonDetectorConfig {
     std::string model_path;
-    float confidence_threshold = 0.30f;
+    float score_floor = 0.30f;
     float nms_threshold = 0.45f;
+    float min_person_class_score = 0.25f;
+    float min_person_class_margin = 0.10f;
+    bool require_person_best_class = false;
 };
 
 class OnnxPersonDetector final : public PersonDetector {
@@ -31,4 +34,3 @@ private:
 };
 
 } // namespace autoframing
-

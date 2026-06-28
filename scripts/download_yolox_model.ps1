@@ -1,26 +1,55 @@
 param(
-    [string]$Destination = "data/models/yolox_nano.onnx"
+    [ValidateSet("nano", "tiny", "s", "all")]
+    [string]$Model = "tiny",
+
+    [string]$DestinationDir = "data/models"
 )
 
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$destinationPath = Join-Path $repoRoot $Destination
-$destinationDir = Split-Path $destinationPath -Parent
-$url = "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_nano.onnx"
+$destinationDirPath = Join-Path $repoRoot $DestinationDir
 
-New-Item -ItemType Directory -Force $destinationDir | Out-Null
-
-Write-Host "Downloading YOLOX-Nano ONNX model..."
-Invoke-WebRequest -Uri $url -OutFile $destinationPath
-
-if (-not (Test-Path $destinationPath)) {
-    throw "YOLOX-Nano model download failed: $destinationPath"
+$models = @{
+    nano = @{
+        File = "yolox_nano.onnx"
+        Url = "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_nano.onnx"
+        Label = "YOLOX-Nano"
+    }
+    tiny = @{
+        File = "yolox_tiny.onnx"
+        Url = "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_tiny.onnx"
+        Label = "YOLOX-Tiny"
+    }
+    s = @{
+        File = "yolox_s.onnx"
+        Url = "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.onnx"
+        Label = "YOLOX-S"
+    }
 }
 
-if ((Get-Item $destinationPath).Length -le 0) {
-    throw "YOLOX-Nano model is empty: $destinationPath"
+$selectedModels = if ($Model -eq "all") {
+    @("nano", "tiny", "s")
+} else {
+    @($Model)
 }
 
-Write-Host "YOLOX-Nano model installed at $destinationPath"
+New-Item -ItemType Directory -Force $destinationDirPath | Out-Null
 
+foreach ($modelName in $selectedModels) {
+    $entry = $models[$modelName]
+    $destinationPath = Join-Path $destinationDirPath $entry.File
+
+    Write-Host "Downloading $($entry.Label) ONNX model..."
+    Invoke-WebRequest -Uri $entry.Url -OutFile $destinationPath
+
+    if (-not (Test-Path $destinationPath)) {
+        throw "$($entry.Label) model download failed: $destinationPath"
+    }
+
+    if ((Get-Item $destinationPath).Length -le 0) {
+        throw "$($entry.Label) model is empty: $destinationPath"
+    }
+
+    Write-Host "$($entry.Label) model installed at $destinationPath"
+}

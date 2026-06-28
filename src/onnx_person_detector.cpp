@@ -2,6 +2,7 @@
 
 #include "geometry.hpp"
 #include "letterbox.hpp"
+#include "yolox_postprocess.hpp"
 
 #include <obs-module.h>
 #include <onnxruntime_cxx_api.h>
@@ -11,7 +12,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
-#include <limits>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -29,13 +29,7 @@ namespace autoframing {
 namespace {
 
 constexpr int default_input_size = 416;
-constexpr int person_class_id = 0;
 constexpr float letterbox_pad = 114.0f;
-
-struct Candidate {
-    Rect box;
-    float score = 0.0f;
-};
 
 std::wstring widen_path(const std::string& path)
 {
@@ -132,110 +126,6 @@ std::vector<float> preprocess_rgba_to_chw(const Frame& frame, int input_width, i
     return tensor;
 }
 
-std::vector<std::pair<int, int>> yolox_grids_for_shape(size_t rows, int input_width, int input_height, std::vector<int>& strides)
-{
-    std::vector<std::pair<int, int>> grids;
-    strides.clear();
-
-    for (int stride : {8, 16, 32}) {
-        const int grid_width = input_width / stride;
-        const int grid_height = input_height / stride;
-        for (int y = 0; y < grid_height; ++y) {
-            for (int x = 0; x < grid_width; ++x) {
-                grids.emplace_back(x, y);
-                strides.push_back(stride);
-            }
-        }
-    }
-
-    if (grids.size() != rows) {
-        grids.clear();
-        strides.clear();
-    }
-    return grids;
-}
-
-bool output_looks_already_decoded(const float* output, size_t rows, size_t features, int input_width, int input_height)
-{
-    const size_t sample_count = std::min<size_t>(rows, 256);
-    const size_t step = std::max<size_t>(1, rows / sample_count);
-    const float wide_x = static_cast<float>(input_width) * 0.75f;
-    const float tall_y = static_cast<float>(input_height) * 0.75f;
-    const float wide_box = static_cast<float>(input_width) * 0.30f;
-    const float tall_box = static_cast<float>(input_height) * 0.30f;
-
-    for (size_t sample = 0; sample < sample_count; ++sample) {
-        const float* row = output + std::min(rows - 1, sample * step) * features;
-        if (row[0] > wide_x || row[1] > tall_y || row[2] > wide_box || row[3] > tall_box) {
-            return true;
-        }
-    }
-    return false;
-}
-
-Rect decode_yolox_box(
-    const float* row,
-    size_t row_index,
-    size_t rows,
-    int input_width,
-    int input_height,
-    const std::vector<std::pair<int, int>>& grids,
-    const std::vector<int>& strides,
-    bool already_decoded)
-{
-    float center_x = row[0];
-    float center_y = row[1];
-    float width = row[2];
-    float height = row[3];
-
-    if (!already_decoded && row_index < grids.size() && row_index < strides.size() && grids.size() == rows) {
-        const int stride = strides[row_index];
-        center_x = (center_x + static_cast<float>(grids[row_index].first)) * static_cast<float>(stride);
-        center_y = (center_y + static_cast<float>(grids[row_index].second)) * static_cast<float>(stride);
-        width = std::exp(std::clamp(width, -20.0f, 20.0f)) * static_cast<float>(stride);
-        height = std::exp(std::clamp(height, -20.0f, 20.0f)) * static_cast<float>(stride);
-    } else if (center_x <= 1.5f && center_y <= 1.5f && width <= 1.5f && height <= 1.5f) {
-        center_x *= static_cast<float>(input_width);
-        width *= static_cast<float>(input_width);
-        center_y *= static_cast<float>(input_height);
-        height *= static_cast<float>(input_height);
-    }
-
-    return make_centered_rect(center_x, center_y, width, height);
-}
-
-Rect undo_letterbox(Rect box, const LetterboxInfo& info, const Size& source_size)
-{
-    return map_letterboxed_model_box_to_source(box, info, source_size);
-}
-
-std::vector<Detection> nms(std::vector<Candidate> candidates, float nms_threshold)
-{
-    std::sort(candidates.begin(), candidates.end(), [](const Candidate& a, const Candidate& b) { return a.score > b.score; });
-
-    std::vector<Detection> detections;
-    std::vector<bool> suppressed(candidates.size(), false);
-
-    for (size_t i = 0; i < candidates.size(); ++i) {
-        if (suppressed[i] || !candidates[i].box.valid()) {
-            continue;
-        }
-
-        Detection detection;
-        detection.box = candidates[i].box;
-        detection.confidence = candidates[i].score;
-        detection.class_id = person_class_id;
-        detections.push_back(detection);
-
-        for (size_t j = i + 1; j < candidates.size(); ++j) {
-            if (!suppressed[j] && intersection_over_union(candidates[i].box, candidates[j].box) > nms_threshold) {
-                suppressed[j] = true;
-            }
-        }
-    }
-
-    return detections;
-}
 
 } // namespace
 
@@ -404,33 +294,23 @@ std::vector<Detection> OnnxPersonDetector::detect(const Frame& frame)
             return {};
         }
 
-        std::vector<int> strides;
-        std::vector<std::pair<int, int>> grids = yolox_grids_for_shape(rows, impl_->input_width, impl_->input_height, strides);
-        const bool already_decoded = output_looks_already_decoded(output, rows, features, impl_->input_width, impl_->input_height);
-
-        std::vector<Candidate> candidates;
-        candidates.reserve(rows);
         const Size source_size{static_cast<float>(frame.width), static_cast<float>(frame.height)};
+        YoloXPostprocessConfig postprocess_config;
+        postprocess_config.score_floor = impl_->config.score_floor;
+        postprocess_config.nms_threshold = impl_->config.nms_threshold;
+        postprocess_config.min_person_class_score = impl_->config.min_person_class_score;
+        postprocess_config.min_person_class_margin = impl_->config.min_person_class_margin;
+        postprocess_config.require_person_best_class = impl_->config.require_person_best_class;
 
-        for (size_t i = 0; i < rows; ++i) {
-            const float* row = output + i * features;
-            const float objectness = row[4];
-            const float person_score = row[5 + person_class_id];
-            const float score = objectness * person_score;
-
-            if (score < impl_->config.confidence_threshold) {
-                continue;
-            }
-
-            Rect box = decode_yolox_box(row, i, rows, impl_->input_width, impl_->input_height, grids, strides, already_decoded);
-            box = undo_letterbox(box, letterbox, source_size);
-            if (box.valid()) {
-                candidates.push_back({box, score});
-            }
-        }
-
-        std::vector<Detection> detections = nms(std::move(candidates), impl_->config.nms_threshold);
-        return detections;
+        return postprocess_yolox_person_detections(
+            output,
+            rows,
+            features,
+            impl_->input_width,
+            impl_->input_height,
+            letterbox,
+            source_size,
+            postprocess_config);
     } catch (const std::exception& exception) {
         blog(LOG_ERROR, "[obs-auto-framing] ONNX inference failure: %s", exception.what());
         return {};

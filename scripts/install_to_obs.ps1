@@ -35,11 +35,14 @@ $dataRoot = Resolve-RequiredPath -Path (Join-Path $projectRoot "data") -Descript
 $effectsRoot = Resolve-RequiredPath -Path (Join-Path $dataRoot "effects") -Description "Effects directory"
 $localeRoot = Resolve-RequiredPath -Path (Join-Path $dataRoot "locale") -Description "Locale directory"
 $modelsRoot = Resolve-RequiredPath -Path (Join-Path $dataRoot "models") -Description "Models directory"
+$modelFiles = @(Get-ChildItem -LiteralPath $modelsRoot -Filter "*.onnx" -File)
+if ($modelFiles.Count -eq 0) {
+    throw "No ONNX model files found in $modelsRoot. Run scripts\download_yolox_model.ps1 -Model tiny."
+}
 
 $requiredDataFiles = @(
     (Join-Path $effectsRoot "crop.effect"),
-    (Join-Path $localeRoot "en-US.ini"),
-    (Join-Path $modelsRoot "yolox_nano.onnx")
+    (Join-Path $localeRoot "en-US.ini")
 )
 
 foreach ($file in $requiredDataFiles) {
@@ -61,15 +64,17 @@ Copy-Item -LiteralPath $pluginDll -Destination $installedPluginDll -Force
 Copy-Item -LiteralPath $onnxRuntimeDll -Destination $installedOnnxRuntimeDll -Force
 Copy-Item -Path (Join-Path $effectsRoot "*") -Destination $effectsDestination -Recurse -Force
 Copy-Item -Path (Join-Path $localeRoot "*") -Destination $localeDestination -Recurse -Force
-Copy-Item -Path (Join-Path $modelsRoot "*") -Destination $modelsDestination -Recurse -Force
+foreach ($modelFile in $modelFiles) {
+    Copy-Item -LiteralPath $modelFile.FullName -Destination (Join-Path $modelsDestination $modelFile.Name) -Force
+}
 
 $installedFiles = @(
     $installedPluginDll,
     $installedOnnxRuntimeDll,
     (Join-Path $effectsDestination "crop.effect"),
-    (Join-Path $localeDestination "en-US.ini"),
-    (Join-Path $modelsDestination "yolox_nano.onnx")
+    (Join-Path $localeDestination "en-US.ini")
 )
+$installedFiles += $modelFiles | ForEach-Object { Join-Path $modelsDestination $_.Name }
 
 Write-Host "Installed obs-auto-framing runtime files:"
 foreach ($file in $installedFiles) {

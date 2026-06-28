@@ -102,6 +102,118 @@ void dead_zone_holds_center_for_small_motion()
     require_near(second.center_x(), first.center_x(), 0.5f, "dead zone keeps crop center stable");
 }
 
+void soft_dead_zone_softens_motion_between_inner_and_outer_zone()
+{
+    CropController controller;
+    AutoFramingSettings settings = default_settings();
+    settings.max_zoom = 6.0;
+    settings.tracking_speed = 1.0;
+    settings.dead_zone = 0.4;
+
+    const Size source{3840.0f, 2160.0f};
+    const Rect first = controller.update(source, {track(1, {940.0f, 760.0f, 120.0f, 320.0f})}, settings, 1.0);
+    controller.update(source, {track(1, {1080.0f, 760.0f, 120.0f, 320.0f})}, settings, 1.0);
+    const Rect softened_target = controller.target_crop();
+
+    require(softened_target.center_x() > first.center_x(), "soft dead zone moves toward mid-zone target");
+    require(softened_target.center_x() < first.center_x() + 140.0f,
+            "soft dead zone does not jump fully to mid-zone target");
+}
+
+void soft_dead_zone_freezes_inside_inner_zone()
+{
+    CropController controller;
+    AutoFramingSettings settings = default_settings();
+    settings.max_zoom = 6.0;
+    settings.tracking_speed = 1.0;
+    settings.dead_zone = 0.4;
+
+    const Size source{3840.0f, 2160.0f};
+    const Rect first = controller.update(source, {track(1, {940.0f, 760.0f, 120.0f, 320.0f})}, settings, 1.0);
+    controller.update(source, {track(1, {990.0f, 760.0f, 120.0f, 320.0f})}, settings, 1.0);
+    const Rect inner_target = controller.target_crop();
+
+    require_near(inner_target.center_x(), first.center_x(), 0.5f, "inner dead zone freezes horizontal target");
+    require_near(inner_target.center_y(), first.center_y(), 0.5f, "inner dead zone freezes vertical target");
+}
+
+void soft_dead_zone_keeps_outer_target_unchanged()
+{
+    CropController softened_controller;
+    CropController full_tracking_controller;
+    AutoFramingSettings softened_settings = default_settings();
+    softened_settings.max_zoom = 6.0;
+    softened_settings.tracking_speed = 1.0;
+    softened_settings.dead_zone = 0.4;
+    AutoFramingSettings full_tracking_settings = softened_settings;
+    full_tracking_settings.dead_zone = 0.0;
+
+    const Size source{3840.0f, 2160.0f};
+    softened_controller.update(source, {track(1, {940.0f, 760.0f, 120.0f, 320.0f})}, softened_settings, 1.0);
+    full_tracking_controller.update(source, {track(1, {940.0f, 760.0f, 120.0f, 320.0f})}, full_tracking_settings, 1.0);
+
+    softened_controller.update(source, {track(1, {1220.0f, 760.0f, 120.0f, 320.0f})}, softened_settings, 1.0);
+    full_tracking_controller.update(source, {track(1, {1220.0f, 760.0f, 120.0f, 320.0f})},
+                                    full_tracking_settings, 1.0);
+
+    const Rect softened_target = softened_controller.target_crop();
+    const Rect full_target = full_tracking_controller.target_crop();
+    require_near(softened_target.center_x(), full_target.center_x(), 0.5f,
+                 "outer dead zone uses full horizontal tracking");
+    require_near(softened_target.center_y(), full_target.center_y(), 0.5f,
+                 "outer dead zone uses full vertical tracking");
+}
+
+void soft_dead_zone_applies_per_axis()
+{
+    CropController softened_controller;
+    CropController full_tracking_controller;
+    AutoFramingSettings softened_settings = default_settings();
+    softened_settings.max_zoom = 6.0;
+    softened_settings.tracking_speed = 1.0;
+    softened_settings.dead_zone = 0.4;
+    AutoFramingSettings full_tracking_settings = softened_settings;
+    full_tracking_settings.dead_zone = 0.0;
+
+    const Size source{3840.0f, 2160.0f};
+    const Rect first =
+        softened_controller.update(source, {track(1, {940.0f, 760.0f, 120.0f, 320.0f})}, softened_settings, 1.0);
+    full_tracking_controller.update(source, {track(1, {940.0f, 760.0f, 120.0f, 320.0f})}, full_tracking_settings,
+                                    1.0);
+
+    softened_controller.update(source, {track(1, {1220.0f, 800.0f, 120.0f, 320.0f})}, softened_settings, 1.0);
+    full_tracking_controller.update(source, {track(1, {1220.0f, 800.0f, 120.0f, 320.0f})},
+                                    full_tracking_settings, 1.0);
+
+    const Rect softened_target = softened_controller.target_crop();
+    const Rect full_target = full_tracking_controller.target_crop();
+    require_near(softened_target.center_x(), full_target.center_x(), 0.5f,
+                 "soft dead zone allows full tracking outside horizontal outer zone");
+    require_near(softened_target.center_y(), first.center_y(), 0.5f,
+                 "soft dead zone freezes vertical target inside inner zone");
+}
+
+void tight_framing_uses_head_and_shoulders_region()
+{
+    CropController tight_controller;
+    CropController balanced_controller;
+    AutoFramingSettings tight_settings = default_settings();
+    tight_settings.framing_preset = FramingPreset::Tight;
+    tight_settings.max_zoom = 6.0;
+    tight_settings.dead_zone = 0.0;
+    AutoFramingSettings balanced_settings = tight_settings;
+    balanced_settings.framing_preset = FramingPreset::Balanced;
+
+    const Size source{1920.0f, 1080.0f};
+    const PersonTrack subject = track(1, {820.0f, 220.0f, 220.0f, 720.0f});
+    const Rect tight = tight_controller.update(source, {subject}, tight_settings, 1.0);
+    const Rect balanced = balanced_controller.update(source, {subject}, balanced_settings, 1.0);
+
+    require(tight.width < balanced.width, "tight framing is narrower than balanced for a full-body subject");
+    require(tight.height < balanced.height, "tight framing is shorter than balanced for a full-body subject");
+    require(tight.center_y() < subject.box.center_y(), "tight framing centers above the full-body center");
+}
+
 void letterboxed_model_box_maps_to_source_coordinates()
 {
     LetterboxInfo letterbox;
@@ -175,6 +287,11 @@ int main()
         crop_eases_back_to_full_frame_without_target();
         group_mode_contains_people();
         dead_zone_holds_center_for_small_motion();
+        soft_dead_zone_softens_motion_between_inner_and_outer_zone();
+        soft_dead_zone_freezes_inside_inner_zone();
+        soft_dead_zone_keeps_outer_target_unchanged();
+        soft_dead_zone_applies_per_axis();
+        tight_framing_uses_head_and_shoulders_region();
         letterboxed_model_box_maps_to_source_coordinates();
         packed_yuv_odd_trailing_pixel_does_not_require_second_pixel_bytes();
         packed_yuv_even_pixel_pair_still_decodes_both_pixels();

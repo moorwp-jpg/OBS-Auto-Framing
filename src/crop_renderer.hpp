@@ -2,8 +2,10 @@
 
 #include "detector.hpp"
 #include "geometry.hpp"
+#include "settings.hpp"
 #include "tracker.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -14,9 +16,17 @@ namespace autoframing {
 struct DebugOverlayData {
     std::vector<Detection> detections;
     std::vector<PersonTrack> tracks;
+    std::vector<PersonTrack> lost_tracks;
     Rect current_crop;
     Rect target_crop;
     double dead_zone = 0.0;
+    TrackingAlgorithm tracking_algorithm = TrackingAlgorithm::ByteTrack;
+    SubjectLockMode subject_lock_mode = SubjectLockMode::Off;
+    std::vector<int> locked_track_ids;
+    size_t ignored_detection_count = 0;
+    bool subject_lock_lost = false;
+    size_t active_track_count = 0;
+    size_t lost_track_count = 0;
 };
 
 class CropRenderer {
