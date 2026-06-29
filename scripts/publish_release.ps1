@@ -74,6 +74,28 @@ function Format-CommandLine {
     return ($Arguments | ForEach-Object { Quote-Argument -Argument $_ }) -join " "
 }
 
+function Resolve-GitHubCli {
+    $ghCommand = Get-Command gh -ErrorAction SilentlyContinue
+    if ($null -ne $ghCommand) {
+        return $ghCommand.Source
+    }
+
+    $candidatePaths = @(
+        "C:\Program Files\GitHub CLI\gh.exe",
+        "C:\Program Files (x86)\GitHub CLI\gh.exe",
+        (Join-Path $env:LOCALAPPDATA "Programs\GitHub CLI\gh.exe")
+    )
+
+    foreach ($candidatePath in $candidatePaths) {
+        if (-not [string]::IsNullOrWhiteSpace($candidatePath) -and
+            (Test-Path -LiteralPath $candidatePath -PathType Leaf)) {
+            return (Resolve-Path -LiteralPath $candidatePath).Path
+        }
+    }
+
+    return $null
+}
+
 $script:ProjectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $buildspecPath = Resolve-RequiredFile -Path (Join-Path $ProjectRoot "buildspec.json") -Description "Build metadata"
 $buildspec = Get-Content -Raw -LiteralPath $buildspecPath | ConvertFrom-Json
@@ -134,15 +156,17 @@ if ($Publish -and $NoAuthCheck) {
 }
 
 if (-not $NoAuthCheck) {
-    $ghCommand = Get-Command gh -ErrorAction SilentlyContinue
-    if ($null -eq $ghCommand) {
+    $ghPath = Resolve-GitHubCli
+    if ([string]::IsNullOrWhiteSpace($ghPath)) {
         throw "GitHub CLI 'gh' was not found on PATH. Install it from https://cli.github.com/ and run 'gh auth login'."
     }
 
-    & gh auth status *> $null
+    & $ghPath auth status *> $null
     if ($LASTEXITCODE -ne 0) {
         throw "GitHub CLI authentication failed. Run 'gh auth login' and try again."
     }
+} else {
+    $ghPath = "gh"
 }
 
 if (-not $Publish) {
@@ -164,7 +188,7 @@ if (-not $Publish) {
 
 Write-Host "Creating GitHub Release $Tag..."
 Write-Host $commandPreview
-& gh @releaseArgs
+& $ghPath @releaseArgs
 if ($LASTEXITCODE -ne 0) {
     throw "GitHub Release publishing failed with exit code $LASTEXITCODE."
 }

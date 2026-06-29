@@ -168,4 +168,8 @@ if(ENABLE_TESTS)
     add_executable(yolox_postprocess_tests tests/yolox_postprocess_tests.cpp)
     target_link_libraries(yolox_postprocess_tests PRIVATE obs-auto-framing-core)
     add_test(NAME yolox_postprocess_tests COMMAND yolox_postprocess_tests)
+
+    add_executable(yuv_tests tests/yuv_tests.cpp)
+    target_link_libraries(yuv_tests PRIVATE obs-auto-framing-core)
+    add_test(NAME yuv_tests COMMAND yuv_tests)
 endif()

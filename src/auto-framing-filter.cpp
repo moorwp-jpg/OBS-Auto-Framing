@@ -1184,6 +1184,25 @@ bool unlock_subject_clicked(obs_properties_t* props, obs_property_t*, void* data
     return true;
 }
 
+std::string source_frame_linesizes_to_string(const obs_source_frame* frame) {
+    if (frame == nullptr) {
+        return "n/a";
+    }
+
+    char buffer[128] = {};
+    std::snprintf(buffer, sizeof(buffer), "[%u, %u, %u, %u]", frame->linesize[0], frame->linesize[1],
+                  frame->linesize[2], frame->linesize[3]);
+    return buffer;
+}
+
+std::string unsupported_source_frame_detail(enum video_format format) {
+    std::string detail = "Unsupported source frame format: ";
+    detail += get_video_format_name(format);
+    detail += ". Try NV12, YUY2, I420, or BGRA, or disable HDR/10-bit output. ";
+    detail += "Model initialization is blocked because no supported frame was captured.";
+    return detail;
+}
+
 bool copy_source_frame_to_rgba(const struct obs_source_frame* source_frame, Frame& frame) {
     if (source_frame == nullptr || source_frame->width == 0 || source_frame->height == 0 ||
         source_frame->data[0] == nullptr) {
@@ -1256,6 +1275,73 @@ bool copy_source_frame_to_rgba(const struct obs_source_frame* source_frame, Fram
             const uint8_t* v_plane = source_frame->data[2] + static_cast<size_t>(y / 2) * source_frame->linesize[2];
             for (uint32_t x = 0; x < frame.width; ++x) {
                 yuv_to_rgba(y_plane[x], u_plane[x / 2], v_plane[x / 2], dst + x * 4);
+            }
+            break;
+        }
+        case VIDEO_FORMAT_I422: {
+            if (source_frame->data[1] == nullptr || source_frame->data[2] == nullptr) {
+                return false;
+            }
+            const uint8_t* y_plane = source_frame->data[0] + static_cast<size_t>(y) * source_frame->linesize[0];
+            const uint8_t* u_plane = source_frame->data[1] + static_cast<size_t>(y) * source_frame->linesize[1];
+            const uint8_t* v_plane = source_frame->data[2] + static_cast<size_t>(y) * source_frame->linesize[2];
+            for (uint32_t x = 0; x < frame.width; ++x) {
+                const uint32_t chroma_x = i422_chroma_index(x);
+                yuv_to_rgba(y_plane[x], u_plane[chroma_x], v_plane[chroma_x], dst + x * 4);
+            }
+            break;
+        }
+        case VIDEO_FORMAT_I444: {
+            if (source_frame->data[1] == nullptr || source_frame->data[2] == nullptr) {
+                return false;
+            }
+            const uint8_t* y_plane = source_frame->data[0] + static_cast<size_t>(y) * source_frame->linesize[0];
+            const uint8_t* u_plane = source_frame->data[1] + static_cast<size_t>(y) * source_frame->linesize[1];
+            const uint8_t* v_plane = source_frame->data[2] + static_cast<size_t>(y) * source_frame->linesize[2];
+            for (uint32_t x = 0; x < frame.width; ++x) {
+                const uint32_t chroma_x = i444_chroma_index(x);
+                yuv_to_rgba(y_plane[x], u_plane[chroma_x], v_plane[chroma_x], dst + x * 4);
+            }
+            break;
+        }
+        case VIDEO_FORMAT_AYUV: {
+            const uint8_t* src = source_frame->data[0] + static_cast<size_t>(y) * source_frame->linesize[0];
+            for (uint32_t x = 0; x < frame.width; ++x) {
+                const AyuvPixel pixel = unpack_ayuv_pixel(src + x * 4);
+                yuv_to_rgba(pixel.y, pixel.u, pixel.v, dst + x * 4);
+                dst[x * 4 + 3] = pixel.a;
+            }
+            break;
+        }
+        case VIDEO_FORMAT_I010: {
+            if (source_frame->data[1] == nullptr || source_frame->data[2] == nullptr) {
+                return false;
+            }
+            const uint8_t* y_plane = source_frame->data[0] + static_cast<size_t>(y) * source_frame->linesize[0];
+            const uint8_t* u_plane = source_frame->data[1] + static_cast<size_t>(y / 2) * source_frame->linesize[1];
+            const uint8_t* v_plane = source_frame->data[2] + static_cast<size_t>(y / 2) * source_frame->linesize[2];
+            for (uint32_t x = 0; x < frame.width; ++x) {
+                const uint32_t chroma_x = i422_chroma_index(x);
+                const uint8_t y8 = i010_sample_to_u8(read_le16(y_plane + static_cast<size_t>(x) * 2));
+                const uint8_t u8 = i010_sample_to_u8(read_le16(u_plane + static_cast<size_t>(chroma_x) * 2));
+                const uint8_t v8 = i010_sample_to_u8(read_le16(v_plane + static_cast<size_t>(chroma_x) * 2));
+                yuv_to_rgba(y8, u8, v8, dst + x * 4);
+            }
+            break;
+        }
+        case VIDEO_FORMAT_P010: {
+            if (source_frame->data[1] == nullptr) {
+                return false;
+            }
+            const uint8_t* y_plane = source_frame->data[0] + static_cast<size_t>(y) * source_frame->linesize[0];
+            const uint8_t* uv_plane = source_frame->data[1] + static_cast<size_t>(y / 2) * source_frame->linesize[1];
+            for (uint32_t x = 0; x < frame.width; ++x) {
+                const uint32_t chroma_x = i422_chroma_index(x);
+                const uint8_t y8 = p010_sample_to_u8(read_le16(y_plane + static_cast<size_t>(x) * 2));
+                const uint8_t u8 = p010_sample_to_u8(read_le16(uv_plane + static_cast<size_t>(chroma_x) * 4));
+                const uint8_t v8 =
+                    p010_sample_to_u8(read_le16(uv_plane + static_cast<size_t>(chroma_x) * 4 + 2));
+                yuv_to_rgba(y8, u8, v8, dst + x * 4);
             }
             break;
         }
@@ -1853,9 +1939,13 @@ struct obs_source_frame* auto_framing_filter_video(void* data, struct obs_source
     if (!copy_source_frame_to_rgba(frame, captured_frame)) {
         const bool already_logged = filter->unsupported_frame_logged.exchange(true);
         if (!already_logged) {
-            blog(LOG_WARNING, "[obs-auto-framing] unsupported source frame format for ONNX capture: %d", frame->format);
+            blog(LOG_WARNING,
+                 "[obs-auto-framing] unsupported source frame format for ONNX capture: format=%d (%s) size=%ux%u "
+                 "linesizes=%s",
+                 static_cast<int>(frame->format), get_video_format_name(frame->format), frame->width, frame->height,
+                 source_frame_linesizes_to_string(frame).c_str());
         }
-        set_runtime_status(filter, RuntimeStatus::Error, "Unsupported source frame format for ONNX capture.");
+        set_runtime_status(filter, RuntimeStatus::Error, unsupported_source_frame_detail(frame->format));
         return frame;
     }
 
@@ -1867,8 +1957,11 @@ struct obs_source_frame* auto_framing_filter_video(void* data, struct obs_source
 
     const bool already_logged = filter->captured_frame_logged.exchange(true);
     if (!already_logged) {
-        blog(LOG_INFO, "[obs-auto-framing] captured first RGBA frame for ONNX detection: %ux%u", frame->width,
-             frame->height);
+        blog(LOG_INFO,
+             "[obs-auto-framing] captured first RGBA frame for ONNX detection: source_format=%d (%s) size=%ux%u "
+             "linesizes=%s",
+             static_cast<int>(frame->format), get_video_format_name(frame->format), frame->width, frame->height,
+             source_frame_linesizes_to_string(frame).c_str());
     }
 
     return frame;

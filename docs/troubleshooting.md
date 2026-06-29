@@ -71,6 +71,18 @@ Check these items:
 - The source contains a visible full or upper body person.
 - OBS is receiving a frame format supported by the capture path. Unsupported formats are logged once.
 
+## Unsupported Source Frame Format
+
+If runtime status says `Unsupported source frame format`, the ONNX detector has not captured a supported source frame yet.
+That means model initialization is blocked, so `Model loaded` can stay `no` and `Model path` can stay `n/a` until capture succeeds.
+
+Open the OBS log and search for `unsupported source frame format for ONNX capture`. The log line includes the numeric
+format, readable OBS format name, frame size, and plane linesizes.
+
+Try switching the camera or source format to `NV12`, `YUY2`, `I420`, or `BGRA`. If the source is using HDR or 10-bit
+output, disable HDR/10-bit output or install an updated plugin version that supports 10-bit capture formats such as
+`I010` and `P010`.
+
 ## False Detections On Chairs, Bottles, Or Background Objects
 
 The ONNX postprocessor now checks all YOLOX class scores before creating a person detection. It requires the person class score to be strong enough and to be the best or near-best class, then still applies the detector score floor and person-only NMS.
