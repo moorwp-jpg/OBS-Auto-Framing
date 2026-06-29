@@ -115,6 +115,22 @@ YOLOX-Tiny is bundled by default. Add `-IncludeNano` for the lightweight fallbac
 
 Use [docs/release_checklist.md](docs/release_checklist.md) for the final v0.1.0 Preview manual QA pass.
 
+## GitHub Release
+
+Release zips are generated artifacts. They stay ignored by git and are attached to GitHub Releases with `scripts\publish_release.ps1` instead of being committed.
+
+```powershell
+.\scripts\publish_release.ps1
+```
+
+The default dry run validates the zip, checksum, release notes, GitHub CLI install, and GitHub authentication, then prints the `gh release create` command. To publish the prerelease after review:
+
+```powershell
+.\scripts\publish_release.ps1 -Publish
+```
+
+An installer may be added later after the preview zip install flow is validated.
+
 To build only the core tracker and crop-controller tests without OBS development files:
 
 ```powershell

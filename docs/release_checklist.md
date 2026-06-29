@@ -17,6 +17,18 @@ Use this checklist against the exact zip intended for release.
 - [ ] Confirm `THIRD_PARTY_NOTICES.md` is included.
 - [ ] Record the SHA256 checksum.
 
+## GitHub Release
+
+- [ ] Confirm the package zip was created in `out\release`.
+- [ ] Confirm the `.sha256` checksum was created in `out\release`.
+- [ ] Review `docs\release_notes\v0.1.0.md`.
+- [ ] Run `scripts\publish_release.ps1` and inspect the dry-run `gh release create` command.
+- [ ] Run `scripts\publish_release.ps1 -Publish`.
+- [ ] Confirm the GitHub Release is marked as a prerelease.
+- [ ] Confirm the zip and checksum are attached as release assets.
+- [ ] Download the release zip from GitHub and confirm it installs successfully by extraction.
+- [ ] Do not commit the generated zip or checksum; they are release assets only.
+
 ## Install Smoke Test
 
 - [ ] Extract the zip into a clean OBS install or OBS runtime root.
