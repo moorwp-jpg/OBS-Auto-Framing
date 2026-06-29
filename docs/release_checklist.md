@@ -1,4 +1,4 @@
-# v0.1.0 Preview Release Checklist
+# v0.1.1 Preview Release Checklist
 
 Use this checklist against the exact zip intended for release.
 
@@ -6,7 +6,7 @@ Use this checklist against the exact zip intended for release.
 
 - [ ] Build `RelWithDebInfo` or `Release`.
 - [ ] Run `scripts\package_release.ps1`.
-- [ ] Confirm the zip name is `obs-auto-framing-v0.1.0-windows-x64.zip`.
+- [ ] Confirm the zip name is `obs-auto-framing-v0.1.1-windows-x64.zip`.
 - [ ] Confirm the zip contains `obs-plugins\64bit\obs-auto-framing.dll`.
 - [ ] Confirm the zip contains `obs-plugins\64bit\onnxruntime.dll`.
 - [ ] Confirm the zip contains `data\obs-plugins\obs-auto-framing\effects\crop.effect`.
@@ -21,7 +21,7 @@ Use this checklist against the exact zip intended for release.
 
 - [ ] Confirm the package zip was created in `out\release`.
 - [ ] Confirm the `.sha256` checksum was created in `out\release`.
-- [ ] Review `docs\release_notes\v0.1.0.md`.
+- [ ] Review `docs\release_notes\v0.1.1.md`.
 - [ ] Run `scripts\publish_release.ps1` and inspect the dry-run `gh release create` command.
 - [ ] Run `scripts\publish_release.ps1 -Publish`.
 - [ ] Confirm the GitHub Release is marked as a prerelease.
@@ -33,7 +33,7 @@ Use this checklist against the exact zip intended for release.
 
 - [ ] Extract the zip into a clean OBS install or OBS runtime root.
 - [ ] Start OBS from that same runtime root.
-- [ ] Confirm the OBS log shows `obs-auto-framing` loaded with version `0.1.0 Preview`.
+- [ ] Confirm the OBS log shows `obs-auto-framing` loaded with version `0.1.1 Preview`.
 - [ ] Confirm `Auto Framing` appears as a video filter.
 - [ ] Add the filter with default settings and leave Custom Model Path empty.
 - [ ] Confirm runtime status shows plugin version, ONNX Runtime CPU, `Balanced - YOLOX-Tiny`, model loaded, and the bundled model path.

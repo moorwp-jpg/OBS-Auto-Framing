@@ -16,7 +16,7 @@
 ## Quick Install
 
 1. Close OBS Studio.
-2. Extract `obs-auto-framing-v0.1.0-windows-x64.zip` into the OBS install root, usually `C:\Program Files\obs-studio`.
+2. Extract `obs-auto-framing-v0.1.1-windows-x64.zip` into the OBS install root, usually `C:\Program Files\obs-studio`.
 3. Start OBS, select a video source, open Filters, and add the `Auto Framing` video filter.
 
 The release zip is laid out so it can be extracted directly into an OBS install or OBS build runtime folder. The default package includes `obs-auto-framing.dll`, `onnxruntime.dll`, `crop.effect`, `en-US.ini`, and `yolox_tiny.onnx`, so the default ONNX Runtime CPU settings work without manually selecting a model path. See [docs/install.md](docs/install.md), [docs/troubleshooting.md](docs/troubleshooting.md), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for install help and bundled asset notices.
@@ -107,13 +107,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\package_releas
 The script defaults to `RelWithDebInfo` when available, falls back to `Release` when no build config is supplied, validates required files, rejects unexpected files and accidental build artifacts such as `.pdb` or `.exe` files, verifies the zip layout, and writes a SHA256 checksum. Output is written to `out\release`, for example:
 
 ```text
-out\release\obs-auto-framing-v0.1.0-windows-x64.zip
-out\release\obs-auto-framing-v0.1.0-windows-x64.zip.sha256
+out\release\obs-auto-framing-v0.1.1-windows-x64.zip
+out\release\obs-auto-framing-v0.1.1-windows-x64.zip.sha256
 ```
 
 YOLOX-Tiny is bundled by default. Add `-IncludeNano` for the lightweight fallback model or `-IncludeSmall` for YOLOX-S. YOLOX-S can be more accurate, but it is larger and slower on CPU.
 
-Use [docs/release_checklist.md](docs/release_checklist.md) for the final v0.1.0 Preview manual QA pass.
+Use [docs/release_checklist.md](docs/release_checklist.md) for the final v0.1.1 Preview manual QA pass.
 
 ## GitHub Release
 

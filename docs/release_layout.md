@@ -57,8 +57,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\package_releas
 The script reads the package version from `buildspec.json` and creates:
 
 ```text
-out\release\obs-auto-framing-v0.1.0-windows-x64.zip
-out\release\obs-auto-framing-v0.1.0-windows-x64.zip.sha256
+out\release\obs-auto-framing-v0.1.1-windows-x64.zip
+out\release\obs-auto-framing-v0.1.1-windows-x64.zip.sha256
 ```
 
 By default it bundles only `yolox_tiny.onnx`. Use `-IncludeNano` to add `yolox_nano.onnx`, or `-IncludeSmall` to add `yolox_s.onnx`. It validates required runtime files, rejects unexpected files, blocked directories, and accidental build artifacts such as `.pdb`, `.exe`, `.lib`, and `.obj`, and verifies the zip contains the expected OBS layout before reporting success.

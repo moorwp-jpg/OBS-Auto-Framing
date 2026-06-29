@@ -10,7 +10,7 @@ Confirm the plugin DLL was installed to:
 
 Confirm you launched OBS from the same runtime root you installed into. If using an OBS source build, start the OBS executable under the matching `rundir\<Config>` folder.
 
-Open the OBS log and search for `obs-auto-framing`. You should see plugin load and filter registration messages, including `version 0.1.0 Preview`.
+Open the OBS log and search for `obs-auto-framing`. You should see plugin load and filter registration messages, including `version 0.1.1 Preview`.
 
 ## Missing onnxruntime.dll
 
@@ -45,7 +45,7 @@ The bundled model filenames are:
 
 Custom ONNX uses only the Custom Model Path selected in the filter settings.
 
-If no model exists, OBS should not crash. The filter status will show `Model missing`, and the log will include the failed model path resolution. A normal v0.1.0 Preview release zip should include `yolox_tiny.onnx`.
+If no model exists, OBS should not crash. The filter status will show `Model missing`, and the log will include the failed model path resolution. A normal v0.1.1 Preview release zip should include `yolox_tiny.onnx`.
 
 ## crop.effect Not Loading
 
@@ -174,7 +174,7 @@ obs-auto-framing
 
 Useful log lines include:
 
-- Plugin load with version `0.1.0 Preview` and filter registration.
+- Plugin load with version `0.1.1 Preview` and filter registration.
 - Detector backend selection.
 - Resolved model path.
 - ONNX Runtime initialization success or failure.

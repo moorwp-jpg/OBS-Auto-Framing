@@ -6,7 +6,7 @@
 
 1. Close OBS Studio.
 2. Find the OBS install root, usually `C:\Program Files\obs-studio`. This is the folder that contains `bin\64bit\obs64.exe`.
-3. Extract `obs-auto-framing-v0.1.0-windows-x64.zip` into that OBS install root.
+3. Extract `obs-auto-framing-v0.1.1-windows-x64.zip` into that OBS install root.
 4. Start OBS.
 5. Add or select a video source, open Filters, then add the `Auto Framing` video filter.
 
