@@ -316,6 +316,8 @@ else {
 $cropEffect = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "data\effects\crop.effect") -Description "Crop effect"
 $localeFile = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "data\locale\en-US.ini") -Description "English locale"
 $readmeFile = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "README.md") -Description "README"
+$licenseFile = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "LICENSE") -Description "License"
+$securityPolicy = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "SECURITY.md") -Description "Security policy"
 $installGuide = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "docs\install.md") -Description "Install guide"
 $troubleshootingGuide = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "docs\troubleshooting.md") -Description "Troubleshooting guide"
 $thirdPartyNotices = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "THIRD_PARTY_NOTICES.md") -Description "Third-party notices"
@@ -359,6 +361,8 @@ $expectedLayout = @(
     "data\obs-plugins\$pluginName\locale\en-US.ini",
     "data\obs-plugins\$pluginName\models\yolox_tiny.onnx",
     "README.md",
+    "LICENSE",
+    "SECURITY.md",
     "docs\install.md",
     "docs\troubleshooting.md",
     "THIRD_PARTY_NOTICES.md"
@@ -369,6 +373,8 @@ Copy-ReleaseFile -Source $onnxRuntimeDll -RelativeDestination "obs-plugins\64bit
 Copy-ReleaseFile -Source $cropEffect -RelativeDestination "data\obs-plugins\$pluginName\effects\crop.effect"
 Copy-ReleaseFile -Source $localeFile -RelativeDestination "data\obs-plugins\$pluginName\locale\en-US.ini"
 Copy-ReleaseFile -Source $readmeFile -RelativeDestination "README.md"
+Copy-ReleaseFile -Source $licenseFile -RelativeDestination "LICENSE"
+Copy-ReleaseFile -Source $securityPolicy -RelativeDestination "SECURITY.md"
 Copy-ReleaseFile -Source $installGuide -RelativeDestination "docs\install.md"
 Copy-ReleaseFile -Source $troubleshootingGuide -RelativeDestination "docs\troubleshooting.md"
 Copy-ReleaseFile -Source $thirdPartyNotices -RelativeDestination "THIRD_PARTY_NOTICES.md"

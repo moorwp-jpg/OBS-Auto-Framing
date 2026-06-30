@@ -20,7 +20,7 @@ data\obs-plugins\obs-auto-framing\locale\en-US.ini
 data\obs-plugins\obs-auto-framing\models\yolox_tiny.onnx
 ```
 
-It also includes `README.md`, `docs\install.md`, `docs\troubleshooting.md`, and `THIRD_PARTY_NOTICES.md`.
+It also includes `README.md`, `LICENSE`, `SECURITY.md`, `docs\install.md`, `docs\troubleshooting.md`, and `THIRD_PARTY_NOTICES.md`.
 
 ## OBS Source Or Build Runtime
 

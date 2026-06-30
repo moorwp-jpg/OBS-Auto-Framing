@@ -4,6 +4,8 @@
 
 ## Status
 
+This is a preview release. When filing bugs, please include OBS version, Windows version, camera/source type, relevant OBS log snippet, and plugin runtime status.
+
 - OBS filter: `OBS_SOURCE_TYPE_FILTER` with `OBS_SOURCE_VIDEO`.
 - Settings UI: user presets, detector backend, detection model, presenter/group tracking mode, framing preset, tracking speed, max zoom, subject lock, and debug overlay. Advanced contains custom model path, tracking algorithm, tracking sensitivity, detection interval, dead zone, detector score floor, NMS threshold, Simple IoU confidence, and ByteTrack thresholds.
 - Detector: `PersonDetector` interface with `MockPersonDetector`, `NullPersonDetector`, and `OnnxPersonDetector`.
@@ -130,6 +132,10 @@ The default dry run validates the zip, checksum, release notes, GitHub CLI insta
 ```
 
 An installer may be added later after the preview zip install flow is validated.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
 
 To build only the core tracker and crop-controller tests without OBS development files:
 
