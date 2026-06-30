@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">OBS Auto Framing social preview</title>
+  <desc id="desc">Social preview image for OBS Auto Framing, a native OBS Studio plugin for smooth virtual crop and pan with person tracking.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="0.55" stop-color="#10192a"/>
+      <stop offset="1" stop-color="#182842"/>
+    </linearGradient>
+    <radialGradient id="blueGlow" cx="78%" cy="10%" r="52%">
+      <stop offset="0" stop-color="#39aeff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#39aeff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="greenGlow" cx="12%" cy="92%" r="50%">
+      <stop offset="0" stop-color="#56e8aa" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#56e8aa" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#131d30"/>
+      <stop offset="1" stop-color="#17243b"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+    <style>
+      .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 76px; font-weight: 800; letter-spacing: -2px; fill: #f5f9fc; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 35px; font-weight: 700; fill: #d5e4f0; }
+      .body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 28px; fill: #9eb3ca; }
+      .badge { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 22px; font-weight: 700; fill: #d1e0ee; }
+      .code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 24px; fill: #56e8aa; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#blueGlow)"/>
+  <rect width="1280" height="640" fill="url(#greenGlow)"/>
+
+  <rect x="70" y="70" width="1140" height="500" rx="42" fill="url(#panel)" stroke="#465c78" stroke-width="2" filter="url(#shadow)"/>
+
+  <g transform="translate(120 150)">
+    <text class="title" x="0" y="72">OBS Auto</text>
+    <text class="title" x="0" y="152">Framing</text>
+    <text class="subtitle" x="4" y="244">Smooth virtual crop &amp; pan</text>
+    <text class="body" x="4" y="291">for OBS Studio streams and recordings</text>
+
+    <g transform="translate(4 362)">
+      <rect x="0" y="0" width="134" height="44" rx="22" fill="#1d2b40" stroke="#556c8a"/>
+      <text class="badge" x="18" y="29">OBS plugin</text>
+      <rect x="151" y="0" width="178" height="44" rx="22" fill="#1d2b40" stroke="#556c8a"/>
+      <text class="badge" x="169" y="29">Person tracking</text>
+      <rect x="346" y="0" width="120" height="44" rx="22" fill="#1d2b40" stroke="#556c8a"/>
+      <text class="badge" x="364" y="29">ByteTrack</text>
+      <rect x="483" y="0" width="138" height="44" rx="22" fill="#1d2b40" stroke="#556c8a"/>
+      <text class="badge" x="501" y="29">YOLOX CPU</text>
+    </g>
+
+    <text class="code" x="4" y="410">obs-auto-framing</text>
+  </g>
+
+  <g transform="translate(715 120)">
+    <rect x="0" y="0" width="430" height="380" rx="28" fill="#090d15" stroke="#5b7091" stroke-width="3"/>
+    <rect x="30" y="40" width="370" height="300" rx="4" fill="#1c273b"/>
+    <path d="M30 328 C92 290 134 300 192 262 C254 222 304 244 400 198 L400 340 L30 340 Z" fill="#213b57" opacity="0.9"/>
+    <circle cx="215" cy="128" r="42" fill="#d2e8f4"/>
+    <rect x="127" y="200" width="176" height="132" rx="66" fill="#d2e8f4"/>
+
+    <rect x="93" y="50" width="242" height="285" rx="18" fill="none" stroke="#56e8aa" stroke-width="6"/>
+    <path d="M93 95 L93 50 L138 50" fill="none" stroke="#56e8aa" stroke-width="9" stroke-linecap="round"/>
+    <path d="M290 50 L335 50 L335 95" fill="none" stroke="#56e8aa" stroke-width="9" stroke-linecap="round"/>
+    <path d="M93 290 L93 335 L138 335" fill="none" stroke="#56e8aa" stroke-width="9" stroke-linecap="round"/>
+    <path d="M290 335 L335 335 L335 290" fill="none" stroke="#56e8aa" stroke-width="9" stroke-linecap="round"/>
+
+    <path d="M25 390 C90 390 116 366 170 376 C229 389 269 361 380 386" fill="none" stroke="#39aeff" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="116" cy="366" r="8" fill="#39aeff"/>
+    <circle cx="269" cy="361" r="8" fill="#39aeff"/>
+  </g>
+</svg>
